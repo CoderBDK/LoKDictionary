@@ -14,6 +14,16 @@
 
 * **Modern UI:** A beautiful and responsive user interface built entirely with Jetpack Compose.
 
+## 📸 Preview
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/fbf308ca-6595-442b-8840-2f783a806e6a" alt="Screenshot 1" width="300" />
+  <img src="https://github.com/user-attachments/assets/28bcd7c5-64e0-46fa-8537-2cf10ff1e3c8" alt="Screenshot 2" width="300" />
+  <img src="https://github.com/user-attachments/assets/b1ac3422-0c13-4f56-9364-675ac97a1dac" alt="Screenshot 3" width="300" />
+  <img src="https://github.com/user-attachments/assets/09278ca4-5174-4f54-84f7-3d4bd3ee464e" alt="Screenshot 4" width="300" />
+</div>
+
+
+
 ## 🛠️ Technologies Used
 
 * **Kotlin:** The official language for modern Android development.
