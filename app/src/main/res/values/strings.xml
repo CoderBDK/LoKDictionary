@@ -5,4 +5,13 @@
     <string name="app_bottom_menu_settings">Settings</string>
 
     <string name="home_screen_search_text_field_hint">Type Word…</string>
+    <string name="home_screen_loading">Loading…</string>
+    <string name="home_screen_error_loading">"Error loading more items"</string>
+    <string name="home_screen_no_items_found">No items found</string>
+    <string name="home_screen_filter_apply">Apply</string>
+    <string name="home_screen_filter_cancel">Cancel</string>
+    <string name="home_screen_filter_words">Filter Words</string>
+    <string name="home_screen_filter_select_word_type">Select word type</string>
+    <string name="home_screen_filter_select_word_language">Select word Language</string>
+    <string name="home_screen_filter_clear_filters">Clear Filters</string>
 </resources>

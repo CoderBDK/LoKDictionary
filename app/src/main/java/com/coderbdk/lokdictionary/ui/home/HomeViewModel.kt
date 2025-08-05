@@ -30,25 +30,34 @@ data class HomeUiState(
     val selectedWordLanguageFilter: WordLanguage? = null,
     val showAddWordDialog: Boolean = false,
     val showEditWordDialog: Boolean = false,
+    val showDropdownMoreMenu: Boolean = false,
+    val showWordFilterDialog: Boolean = false,
+    val showDropdownMoreMenuAtIndex: Int = 0,
     val editWord: Word? = null,
     val errorMessage: String? = null,
 )
+
 sealed class HomeUiEvent {
     data class ShowAddWordDialog(val mode: Boolean) : HomeUiEvent()
     data class AddNewWord(val word: Word) : HomeUiEvent()
-    data class ShowEditWordDialog(val mode: Boolean, val word: Word?) : HomeUiEvent()
+    data class ShowEditWordDialog(val mode: Boolean) : HomeUiEvent()
     data class EditWord(val word: Word) : HomeUiEvent()
     data class DeleteWord(val word: Word) : HomeUiEvent()
     data class SearchQueryChanged(val query: String) : HomeUiEvent()
-    data class WordTypeFilterSelected(val wordType: WordType?) : HomeUiEvent()
-    data class WordLanguageFilterSelected(val wordLanguage: WordLanguage?) : HomeUiEvent()
+    data class WordFilterApply(val wordType: WordType?, val wordLanguage: WordLanguage?) :
+        HomeUiEvent()
+
     object ClearSearchFilters : HomeUiEvent()
+    data class ShowDropdownMoreMenu(val mode: Boolean, val showAtIndex: Int, val word: Word?) :
+        HomeUiEvent()
+
+    data class ShowWordFilterDialog(val mode: Boolean) : HomeUiEvent()
 }
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val wordRepository: WordRepository
-): ViewModel() {
+) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -62,39 +71,64 @@ class HomeViewModel @Inject constructor(
     }.flatMapLatest { it }
         .cachedIn(viewModelScope)
 
-    init {
-        /*for (i in 0..100000) {
-            onEvent(
-                HomeUiEvent.AddNewWord(
-                    Word(
-                        word = Array((3..8).random()) {
-                            (65..86).random().toChar()
-                        }.joinToString(""),
-                        wordType = WordType.NOUN,
-                        wordLanguage = WordLanguage.ENGLISH,
-                        wordPronunciation = ""
-                    )
-                )
-            )
-        }*/
-
-    }
     fun onEvent(event: HomeUiEvent) {
-        when(event) {
+        when (event) {
             is HomeUiEvent.AddNewWord -> addNewWord(event.word)
             is HomeUiEvent.DeleteWord -> deleteWord(event.word)
             is HomeUiEvent.EditWord -> editWord(event.word)
             is HomeUiEvent.SearchQueryChanged -> handleSearchQueryChanged(event.query)
-            is HomeUiEvent.WordLanguageFilterSelected -> handleWordLanguageFilter(event.wordLanguage)
-            is HomeUiEvent.WordTypeFilterSelected -> handleWordTypeFilter(event.wordType)
+            is HomeUiEvent.WordFilterApply -> applyWordFilter(event.wordType, event.wordLanguage)
             is HomeUiEvent.ClearSearchFilters -> clearSearchFilters()
             is HomeUiEvent.ShowAddWordDialog -> showAddWordDialog(event.mode)
-            is HomeUiEvent.ShowEditWordDialog -> showEditWordDialog(event.mode, event.word)
+            is HomeUiEvent.ShowEditWordDialog -> showEditWordDialog(event.mode)
+            is HomeUiEvent.ShowDropdownMoreMenu -> showDropdownMoreMenu(
+                event.mode,
+                event.showAtIndex,
+                event.word
+            )
+
+            is HomeUiEvent.ShowWordFilterDialog -> showWordFilterDialog(event.mode)
+        }
+    }
+
+    private fun applyWordFilter(
+        wordType: WordType?,
+        wordLanguage: WordLanguage?
+    ) {
+        _uiState.update {
+            it.copy(
+                selectedWordTypeFilter = wordType,
+                selectedWordLanguageFilter = wordLanguage,
+                showWordFilterDialog = false
+            )
+        }
+    }
+
+    private fun showWordFilterDialog(mode: Boolean) {
+        _uiState.update {
+            it.copy(
+                showWordFilterDialog = mode,
+            )
+        }
+    }
+
+    private fun showDropdownMoreMenu(mode: Boolean, showAtIndex: Int, word: Word?) {
+        _uiState.update {
+            it.copy(
+                showDropdownMoreMenu = mode,
+                showDropdownMoreMenuAtIndex = showAtIndex,
+                editWord = word
+            )
         }
     }
 
     private fun addNewWord(word: Word) {
         viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    showAddWordDialog = false,
+                )
+            }
             wordRepository.insertWord(word)
         }
     }
@@ -116,15 +150,6 @@ class HomeViewModel @Inject constructor(
     }
 
 
-    private fun handleWordLanguageFilter(wordLanguage: WordLanguage?) {
-        _uiState.update { it.copy(selectedWordLanguageFilter = wordLanguage) }
-    }
-
-
-    private fun handleWordTypeFilter(wordType: WordType?) {
-        _uiState.update { it.copy(selectedWordTypeFilter = wordType) }
-    }
-
     private fun clearSearchFilters() {
         _uiState.update {
             it.copy(
@@ -140,11 +165,10 @@ class HomeViewModel @Inject constructor(
     }
 
 
-    private fun showEditWordDialog(mode: Boolean, word: Word?) {
+    private fun showEditWordDialog(mode: Boolean) {
         _uiState.update {
             it.copy(
                 showEditWordDialog = mode,
-                editWord = word
             )
         }
     }
