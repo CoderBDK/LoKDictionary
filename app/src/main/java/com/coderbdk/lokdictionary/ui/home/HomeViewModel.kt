@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.coderbdk.lokdictionary.data.local.entity.Word
+import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
 import com.coderbdk.lokdictionary.data.repository.WordRepository

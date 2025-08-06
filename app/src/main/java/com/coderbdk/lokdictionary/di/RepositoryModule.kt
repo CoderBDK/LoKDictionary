@@ -1,6 +1,6 @@
 package com.coderbdk.lokdictionary.di
 
-import com.coderbdk.lokdictionary.data.local.dao.WordDao
+import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
 import com.coderbdk.lokdictionary.data.repository.WordRepository
 import com.coderbdk.lokdictionary.data.repository.WordRepositoryImpl
 import dagger.Module

@@ -1,4 +1,4 @@
-package com.coderbdk.lokdictionary.data.local.dao
+package com.coderbdk.lokdictionary.data.local.db.dao
 
 import androidx.paging.PagingSource
 import androidx.room.Dao
@@ -7,7 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
-import com.coderbdk.lokdictionary.data.local.entity.Word
+import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
 

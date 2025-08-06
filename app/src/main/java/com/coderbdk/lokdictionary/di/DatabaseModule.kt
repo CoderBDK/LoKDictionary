@@ -2,8 +2,8 @@ package com.coderbdk.lokdictionary.di
 
 import android.content.Context
 import androidx.room.Room
-import com.coderbdk.lokdictionary.data.local.LoKDictionaryDatabase
-import com.coderbdk.lokdictionary.data.local.dao.WordDao
+import com.coderbdk.lokdictionary.data.local.db.LoKDictionaryDatabase
+import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -1,4 +1,4 @@
-package com.coderbdk.lokdictionary.data.local
+package com.coderbdk.lokdictionary.data.local.db
 
 import androidx.room.TypeConverter
 import com.coderbdk.lokdictionary.data.model.WordLanguage

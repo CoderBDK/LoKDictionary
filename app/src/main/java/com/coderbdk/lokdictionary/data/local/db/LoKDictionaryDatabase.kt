@@ -1,10 +1,10 @@
-package com.coderbdk.lokdictionary.data.local
+package com.coderbdk.lokdictionary.data.local.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.coderbdk.lokdictionary.data.local.dao.WordDao
-import com.coderbdk.lokdictionary.data.local.entity.Word
+import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
+import com.coderbdk.lokdictionary.data.local.db.entity.Word
 
 @Database(
     entities = [Word::class],

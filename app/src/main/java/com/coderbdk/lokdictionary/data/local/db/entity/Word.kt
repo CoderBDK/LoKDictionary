@@ -1,4 +1,4 @@
-package com.coderbdk.lokdictionary.data.local.entity
+package com.coderbdk.lokdictionary.data.local.db.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
