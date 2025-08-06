@@ -1,6 +1,9 @@
 package com.coderbdk.lokdictionary.di
 
 import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
+import com.coderbdk.lokdictionary.data.local.prefs.SettingsPreferences
+import com.coderbdk.lokdictionary.data.repository.SettingsRepository
+import com.coderbdk.lokdictionary.data.repository.SettingsRepositoryImpl
 import com.coderbdk.lokdictionary.data.repository.WordRepository
 import com.coderbdk.lokdictionary.data.repository.WordRepositoryImpl
 import dagger.Module
@@ -19,4 +22,13 @@ object RepositoryModule {
     ): WordRepository {
         return WordRepositoryImpl(dao)
     }
+
+    @Singleton
+    @Provides
+    fun provideSettingsRepository(
+        prefs: SettingsPreferences
+    ): SettingsRepository {
+        return SettingsRepositoryImpl(prefs)
+    }
+
 }

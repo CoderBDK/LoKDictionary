@@ -10,6 +10,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.coderbdk.lokdictionary.ui.home.HomeRoute
+import com.coderbdk.lokdictionary.ui.settings.SettingsRoute
 
 @Composable
 fun LoKDictionaryNavGraph(
@@ -31,7 +32,7 @@ fun LoKDictionaryNavGraph(
 
         }
         composable<Screen.Settings> {
-
+            SettingsRoute()
         }
     }
 }

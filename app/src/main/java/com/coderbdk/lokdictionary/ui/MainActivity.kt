@@ -1,4 +1,4 @@
-package com.coderbdk.lokdictionary
+package com.coderbdk.lokdictionary.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,13 +9,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Bookmarks
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
@@ -23,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,15 +28,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.coderbdk.lokdictionary.R
 import com.coderbdk.lokdictionary.ui.navigation.LoKDictionaryNavActions
 import com.coderbdk.lokdictionary.ui.navigation.LoKDictionaryNavGraph
 import com.coderbdk.lokdictionary.ui.navigation.Screen
@@ -53,9 +52,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LoKDictionaryTheme {
-                LoKDictionaryApp()
-            }
+            LoKDictionaryApp()
         }
     }
 }
@@ -66,6 +63,8 @@ fun LoKDictionaryApp() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     val navActions = LoKDictionaryNavActions(navController)
+    val viewModel = hiltViewModel<MainViewModel>()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val bottomNavItems = remember {
         listOf(
@@ -90,31 +89,37 @@ fun LoKDictionaryApp() {
             ),
         )
     }
-    Scaffold(
-        topBar = {
+    LoKDictionaryTheme(
+        darkTheme = uiState.isDarkTheme
+    ) {
+        Surface {
+            Scaffold(
+                topBar = {
 
-        },
-        bottomBar = {
-            LoKDictionaryBottomNavigation(
-                currentDestination,
-                bottomNavItems,
-                onNavigate = {
-                    navController.navigate(it.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                })
-        },
-        modifier = Modifier.fillMaxSize()
-    ) { innerPadding ->
-        LoKDictionaryNavGraph(
-            navController = navController,
-            navActions = navActions,
-            modifier = Modifier.padding(innerPadding)
-        )
+                },
+                bottomBar = {
+                    LoKDictionaryBottomNavigation(
+                        currentDestination,
+                        bottomNavItems,
+                        onNavigate = {
+                            navController.navigate(it.route) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = true
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        })
+                },
+                modifier = Modifier.fillMaxSize()
+            ) { innerPadding ->
+                LoKDictionaryNavGraph(
+                    navController = navController,
+                    navActions = navActions,
+                    modifier = Modifier.padding(innerPadding)
+                )
+            }
+        }
     }
 }
 
