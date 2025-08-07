@@ -40,15 +40,15 @@ data class HomeUiState(
     val showDropdownMoreMenu: Boolean = false,
     val showWordFilterDialog: Boolean = false,
     val showDropdownMoreMenuAtIndex: Int = 0,
-    val editWord: Word? = null,
+    val editWord: WordWithMeaning? = null,
     val errorMessage: String? = null,
 )
 
 sealed class HomeUiEvent {
     data class ShowAddWordDialog(val mode: Boolean) : HomeUiEvent()
     data class AddNewWord(val word: WordWithMeaning) : HomeUiEvent()
-    data class ShowEditWordDialog(val mode: Boolean) : HomeUiEvent()
-    data class EditWord(val word: Word) : HomeUiEvent()
+    data class ShowEditWordDialog(val mode: Boolean, val word: WordWithMeaning?) : HomeUiEvent()
+    data class EditWord(val word: WordWithMeaning) : HomeUiEvent()
     data class DeleteWord(val word: Word) : HomeUiEvent()
     data class SearchQueryChanged(val query: String) : HomeUiEvent()
     data class WordFilterApply(
@@ -59,10 +59,11 @@ sealed class HomeUiEvent {
         HomeUiEvent()
 
     object ClearSearchFilters : HomeUiEvent()
-    data class ShowDropdownMoreMenu(val mode: Boolean, val showAtIndex: Int, val word: Word?) :
+    data class ShowDropdownMoreMenu(val mode: Boolean, val showAtIndex: Int) :
         HomeUiEvent()
 
     data class ShowWordFilterDialog(val mode: Boolean) : HomeUiEvent()
+    data class WordBookmark(val word: Word) : HomeUiEvent()
 }
 
 @HiltViewModel
@@ -121,14 +122,24 @@ class HomeViewModel @Inject constructor(
 
             is HomeUiEvent.ClearSearchFilters -> clearSearchFilters()
             is HomeUiEvent.ShowAddWordDialog -> showAddWordDialog(event.mode)
-            is HomeUiEvent.ShowEditWordDialog -> showEditWordDialog(event.mode)
+            is HomeUiEvent.ShowEditWordDialog -> showEditWordDialog(event.mode, event.word)
             is HomeUiEvent.ShowDropdownMoreMenu -> showDropdownMoreMenu(
                 event.mode,
                 event.showAtIndex,
-                event.word
             )
 
             is HomeUiEvent.ShowWordFilterDialog -> showWordFilterDialog(event.mode)
+            is HomeUiEvent.WordBookmark -> toggleBookmark(event.word)
+        }
+    }
+
+    private fun toggleBookmark(word: Word) {
+        viewModelScope.launch {
+            wordRepository.updateWord(
+                word.copy(
+                    isBookmark = !word.isBookmark
+                )
+            )
         }
     }
 
@@ -155,12 +166,11 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun showDropdownMoreMenu(mode: Boolean, showAtIndex: Int, word: Word?) {
+    private fun showDropdownMoreMenu(mode: Boolean, showAtIndex: Int) {
         _uiState.update {
             it.copy(
                 showDropdownMoreMenu = mode,
                 showDropdownMoreMenuAtIndex = showAtIndex,
-                editWord = word
             )
         }
     }
@@ -187,9 +197,16 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun editWord(word: Word) {
+    private fun editWord(newWord: WordWithMeaning) {
         viewModelScope.launch {
-            wordRepository.updateWord(word)
+            wordRepository.updateWord(newWord.word)
+            meaningRepository.updateMeaning(newWord.meaning)
+            _uiState.update {
+                it.copy(
+                    showEditWordDialog = false,
+                    editWord = null
+                )
+            }
         }
     }
 
@@ -213,10 +230,11 @@ class HomeViewModel @Inject constructor(
     }
 
 
-    private fun showEditWordDialog(mode: Boolean) {
+    private fun showEditWordDialog(mode: Boolean, word: WordWithMeaning?) {
         _uiState.update {
             it.copy(
                 showEditWordDialog = mode,
+                editWord = word
             )
         }
     }

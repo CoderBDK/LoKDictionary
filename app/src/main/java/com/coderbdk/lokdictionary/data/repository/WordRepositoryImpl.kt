@@ -3,6 +3,7 @@ package com.coderbdk.lokdictionary.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.PagingSource
 import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
@@ -57,6 +58,28 @@ class WordRepositoryImpl @Inject constructor(private val wordDao: WordDao) : Wor
             ),
             pagingSourceFactory = {
                 wordDao.searchWordsWithMeaningsPagingSource(
+                    searchQuery = searchQuery,
+                    wordType = wordType,
+                    wordLanguage = wordLanguage,
+                    meaningLanguage = meaningLanguage
+                )
+            }
+        ).flow
+    }
+
+    override fun searchBookmarksWordsWithMeaningsPagingSource(
+        searchQuery: String,
+        wordType: WordType?,
+        wordLanguage: WordLanguage?,
+        meaningLanguage: WordLanguage?
+    ): Flow<PagingData<WordWithMeaning>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 30,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
+                wordDao.searchBookmarksWordsWithMeaningsPagingSource(
                     searchQuery = searchQuery,
                     wordType = wordType,
                     wordLanguage = wordLanguage,

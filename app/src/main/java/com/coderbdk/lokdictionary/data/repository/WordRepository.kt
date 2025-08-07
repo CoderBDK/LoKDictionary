@@ -1,6 +1,7 @@
 package com.coderbdk.lokdictionary.data.repository
 
 import androidx.paging.PagingData
+import androidx.paging.PagingSource
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
@@ -22,6 +23,13 @@ interface WordRepository {
 
 
     fun searchWordsWithMeaningsPagingSource(
+        searchQuery: String,
+        wordType: WordType?,
+        wordLanguage: WordLanguage?,
+        meaningLanguage: WordLanguage?
+    ): Flow<PagingData<WordWithMeaning>>
+
+    fun searchBookmarksWordsWithMeaningsPagingSource(
         searchQuery: String,
         wordType: WordType?,
         wordLanguage: WordLanguage?,

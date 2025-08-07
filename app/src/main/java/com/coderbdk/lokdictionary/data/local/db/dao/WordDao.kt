@@ -59,5 +59,24 @@ interface WordDao {
         meaningLanguage: WordLanguage?
     ): PagingSource<Int, WordWithMeaning>
 
+    @Transaction
+    @Query(
+        """
+    SELECT words.*, meanings.* FROM words
+    LEFT JOIN meanings ON words.word_id = meanings.word_id
+    WHERE (words.word LIKE '%' || :searchQuery || '%')
+    AND (:wordType IS NULL OR words.word_type = :wordType)
+    AND (:wordLanguage IS NULL OR words.word_language = :wordLanguage)
+    AND (:meaningLanguage IS NULL OR meanings.meaning_language = :meaningLanguage)
+    AND words.is_bookmark = 1
+    ORDER BY words.word ASC
+"""
+    )
+    fun searchBookmarksWordsWithMeaningsPagingSource(
+        searchQuery: String,
+        wordType: WordType?,
+        wordLanguage: WordLanguage?,
+        meaningLanguage: WordLanguage?
+    ): PagingSource<Int, WordWithMeaning>
 
 }

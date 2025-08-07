@@ -9,6 +9,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.coderbdk.lokdictionary.ui.bookmark.BookmarkRoute
 import com.coderbdk.lokdictionary.ui.home.HomeRoute
 import com.coderbdk.lokdictionary.ui.settings.SettingsRoute
 
@@ -29,7 +30,7 @@ fun LoKDictionaryNavGraph(
             HomeRoute()
         }
         composable<Screen.Bookmark> {
-
+            BookmarkRoute()
         }
         composable<Screen.Settings> {
             SettingsRoute()

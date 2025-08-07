@@ -21,11 +21,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.NoteAdd
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Book
+import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkAdd
+import androidx.compose.material.icons.outlined.BookmarkRemove
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
@@ -85,6 +88,17 @@ fun HomeScreen(
             },
             onSave = { newWord ->
                 onEvent(HomeUiEvent.AddNewWord(newWord))
+            }
+        )
+    }
+    if (uiState.showEditWordDialog && uiState.editWord != null) {
+        EditWordDialog(
+            editWord = uiState.editWord,
+            onDismiss = {
+                onEvent(HomeUiEvent.ShowEditWordDialog(false, null))
+            },
+            onSave = { newWord ->
+                onEvent(HomeUiEvent.EditWord(newWord))
             }
         )
     }
@@ -217,23 +231,28 @@ fun HomeScreen(
                     ) { index ->
                         val word = pagedWords[index]
                         word?.let {
-                            WordItem(uiState, index, word.word, word.meaning, showMoreMenu = {
-                                onEvent(
-                                    HomeUiEvent.ShowDropdownMoreMenu(
-                                        true,
-                                        index,
-                                        word.word
+                            WordItem(
+                                uiState, index, word.word, word.meaning, showMoreMenu = {
+                                    onEvent(
+                                        HomeUiEvent.ShowDropdownMoreMenu(
+                                            true,
+                                            index
+                                        )
                                     )
-                                )
-                            }, onDismissRequest = {
-                                onEvent(
-                                    HomeUiEvent.ShowDropdownMoreMenu(
-                                        false,
-                                        0,
-                                        null
+                                }, onDismissRequest = {
+                                    onEvent(
+                                        HomeUiEvent.ShowDropdownMoreMenu(
+                                            false,
+                                            0
+                                        )
                                     )
-                                )
-                            })
+                                },
+                                onEdit = {
+                                    onEvent(HomeUiEvent.ShowEditWordDialog(true, word))
+                                },
+                                onToggleBookmark = {
+                                    onEvent(HomeUiEvent.WordBookmark(word.word))
+                                })
                         }
                     }
 
@@ -383,6 +402,122 @@ fun AddWordDialog(
 }
 
 @Composable
+fun EditWordDialog(
+    editWord: WordWithMeaning,
+    onDismiss: () -> Unit,
+    onSave: (WordWithMeaning) -> Unit
+) {
+    var word by remember { mutableStateOf(editWord.word.word) }
+    var meaning by remember { mutableStateOf(editWord.meaning.meaning) }
+    var pronunciation by remember { mutableStateOf(editWord.word.wordPronunciation) }
+    var selectedType by remember { mutableStateOf(editWord.word.wordType) }
+    var selectedLanguage by remember { mutableStateOf(editWord.word.wordLanguage) }
+    var selectedMeaningLanguage by remember { mutableStateOf(editWord.meaning.meaningLanguage) }
+    val wordTypes = remember { WordType.entries.drop(1) }
+    val wordLanguages = remember { WordLanguage.entries.drop(1) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (word.isNotBlank() && pronunciation.isNotBlank()) {
+                        onSave(
+                            WordWithMeaning(
+                                word = editWord.word.copy(
+                                    word = word.trim(),
+                                    wordType = selectedType,
+                                    wordLanguage = selectedLanguage,
+                                    wordPronunciation = pronunciation.trim()
+                                ),
+                                meaning = editWord.meaning.copy(
+                                    meaning = meaning,
+                                    meaningLanguage = selectedMeaningLanguage
+                                )
+                            )
+
+                        )
+                    }
+                }
+            ) {
+                Text("Update")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        title = { Text("Edit Word") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                OutlinedTextField(
+                    value = word,
+                    onValueChange = { word = it },
+                    label = { Text("Word") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = meaning,
+                    onValueChange = { meaning = it },
+                    label = { Text("Meaning") },
+                    singleLine = true
+                )
+                OutlinedTextField(
+                    value = pronunciation,
+                    onValueChange = { pronunciation = it },
+                    label = { Text("Pronunciation") },
+                    singleLine = true
+                )
+
+                LoKDropdownMenu(
+                    value = selectedType.typeName,
+                    items = wordTypes,
+                    label = {
+                        Text(stringResource(R.string.home_screen_filter_select_word_type))
+                    },
+                    itemContent = {
+                        Text(it.typeName)
+                    },
+                    onItemSelected = {
+                        selectedType = it
+                    }
+                )
+                LoKDropdownMenu(
+                    value = selectedLanguage.languageName,
+                    items = wordLanguages,
+                    label = {
+                        Text(stringResource(R.string.home_screen_filter_select_word_language))
+                    },
+                    itemContent = {
+                        Text(it.languageName)
+                    },
+                    onItemSelected = {
+                        selectedLanguage = it
+                    }
+                )
+                LoKDropdownMenu(
+                    value = selectedMeaningLanguage.languageName,
+                    items = wordLanguages,
+                    label = {
+                        Text(stringResource(R.string.home_screen_filter_select_meaning_language))
+                    },
+                    itemContent = {
+                        Text(it.languageName)
+                    },
+                    onItemSelected = {
+                        selectedMeaningLanguage = it
+                    }
+                )
+            }
+        }
+    )
+}
+
+@Composable
 fun WordFilterDialog(
     selectedWordType: WordType?,
     selectedWordLanguage: WordLanguage?,
@@ -476,7 +611,9 @@ fun WordFilterDialog(
 fun DropdownMenuWithMoreOptions(
     expanded: Boolean,
     word: Word,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    onEdit: () -> Unit,
+    onToggleBookmark: () -> Unit,
 ) {
 
     DropdownMenu(
@@ -489,6 +626,7 @@ fun DropdownMenuWithMoreOptions(
             leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null) },
             onClick = {
                 onDismissRequest()
+                onEdit()
             }
         )
 
@@ -496,10 +634,11 @@ fun DropdownMenuWithMoreOptions(
         HorizontalDivider()
 
         DropdownMenuItem(
-            text = { Text("Bookmark") },
-            leadingIcon = { Icon(Icons.Outlined.BookmarkAdd, contentDescription = null) },
+            text = { Text(if(word.isBookmark)"Unbookmark" else "Bookmark") },
+            leadingIcon = { Icon(if(word.isBookmark) Icons.Outlined.BookmarkRemove else Icons.Outlined.BookmarkAdd, contentDescription = null) },
             onClick = {
                 onDismissRequest()
+                onToggleBookmark()
             }
         )
         DropdownMenuItem(
@@ -529,7 +668,9 @@ fun WordItem(
     word: Word,
     meaning: Meaning,
     showMoreMenu: (Word) -> Unit,
-    onDismissRequest: () -> Unit
+    onDismissRequest: () -> Unit,
+    onEdit: () -> Unit,
+    onToggleBookmark: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -569,7 +710,9 @@ fun WordItem(
                         DropdownMenuWithMoreOptions(
                             expanded = true,
                             word = word,
-                            onDismissRequest = onDismissRequest
+                            onDismissRequest = onDismissRequest,
+                            onEdit = onEdit,
+                            onToggleBookmark = onToggleBookmark
                         )
                     }
                 }
