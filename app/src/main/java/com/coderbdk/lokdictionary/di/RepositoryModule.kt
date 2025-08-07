@@ -1,7 +1,10 @@
 package com.coderbdk.lokdictionary.di
 
+import com.coderbdk.lokdictionary.data.local.db.dao.MeaningDao
 import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
 import com.coderbdk.lokdictionary.data.local.prefs.SettingsPreferences
+import com.coderbdk.lokdictionary.data.repository.MeaningRepository
+import com.coderbdk.lokdictionary.data.repository.MeaningRepositoryImpl
 import com.coderbdk.lokdictionary.data.repository.SettingsRepository
 import com.coderbdk.lokdictionary.data.repository.SettingsRepositoryImpl
 import com.coderbdk.lokdictionary.data.repository.WordRepository
@@ -31,4 +34,11 @@ object RepositoryModule {
         return SettingsRepositoryImpl(prefs)
     }
 
+    @Singleton
+    @Provides
+    fun provideMeaningRepository(
+        dao: MeaningDao
+    ): MeaningRepository {
+        return MeaningRepositoryImpl(dao)
+    }
 }

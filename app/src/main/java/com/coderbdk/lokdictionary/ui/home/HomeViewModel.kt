@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
+import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
+import com.coderbdk.lokdictionary.data.repository.MeaningRepository
 import com.coderbdk.lokdictionary.data.repository.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -28,6 +30,7 @@ data class HomeUiState(
     val searchQuery: String = "",
     val selectedWordTypeFilter: WordType? = null,
     val selectedWordLanguageFilter: WordLanguage? = null,
+    val selectedMeaningLanguageFilter: WordLanguage? = null,
     val showAddWordDialog: Boolean = false,
     val showEditWordDialog: Boolean = false,
     val showDropdownMoreMenu: Boolean = false,
@@ -39,12 +42,16 @@ data class HomeUiState(
 
 sealed class HomeUiEvent {
     data class ShowAddWordDialog(val mode: Boolean) : HomeUiEvent()
-    data class AddNewWord(val word: Word) : HomeUiEvent()
+    data class AddNewWord(val word: WordWithMeaning) : HomeUiEvent()
     data class ShowEditWordDialog(val mode: Boolean) : HomeUiEvent()
     data class EditWord(val word: Word) : HomeUiEvent()
     data class DeleteWord(val word: Word) : HomeUiEvent()
     data class SearchQueryChanged(val query: String) : HomeUiEvent()
-    data class WordFilterApply(val wordType: WordType?, val wordLanguage: WordLanguage?) :
+    data class WordFilterApply(
+        val wordType: WordType?,
+        val wordLanguage: WordLanguage?,
+        val meaningLanguage: WordLanguage?
+    ) :
         HomeUiEvent()
 
     object ClearSearchFilters : HomeUiEvent()
@@ -56,18 +63,25 @@ sealed class HomeUiEvent {
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val wordRepository: WordRepository
+    private val wordRepository: WordRepository,
+    private val meaningRepository: MeaningRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    val pagedWords: Flow<PagingData<Word>> = combine(
+    val pagedWords: Flow<PagingData<WordWithMeaning>> = combine(
         _uiState.map { it.searchQuery }.debounce(350L).distinctUntilChanged(),
         _uiState.map { it.selectedWordTypeFilter }.distinctUntilChanged(),
-        _uiState.map { it.selectedWordLanguageFilter }.distinctUntilChanged()
-    ) { query, status, folder ->
-        wordRepository.searchWordsPagingSource(query, status, folder)
+        _uiState.map { it.selectedWordLanguageFilter }.distinctUntilChanged(),
+        _uiState.map { it.selectedMeaningLanguageFilter }.distinctUntilChanged()
+    ) { query, wordType, wordLanguage, meaningLanguage ->
+        wordRepository.searchWordsWithMeaningsPagingSource(
+            query,
+            wordType,
+            wordLanguage,
+            meaningLanguage
+        )
     }.flatMapLatest { it }
         .cachedIn(viewModelScope)
 
@@ -77,7 +91,12 @@ class HomeViewModel @Inject constructor(
             is HomeUiEvent.DeleteWord -> deleteWord(event.word)
             is HomeUiEvent.EditWord -> editWord(event.word)
             is HomeUiEvent.SearchQueryChanged -> handleSearchQueryChanged(event.query)
-            is HomeUiEvent.WordFilterApply -> applyWordFilter(event.wordType, event.wordLanguage)
+            is HomeUiEvent.WordFilterApply -> applyWordFilter(
+                event.wordType,
+                event.wordLanguage,
+                event.meaningLanguage
+            )
+
             is HomeUiEvent.ClearSearchFilters -> clearSearchFilters()
             is HomeUiEvent.ShowAddWordDialog -> showAddWordDialog(event.mode)
             is HomeUiEvent.ShowEditWordDialog -> showEditWordDialog(event.mode)
@@ -93,12 +112,14 @@ class HomeViewModel @Inject constructor(
 
     private fun applyWordFilter(
         wordType: WordType?,
-        wordLanguage: WordLanguage?
+        wordLanguage: WordLanguage?,
+        meaningLanguage: WordLanguage?
     ) {
         _uiState.update {
             it.copy(
                 selectedWordTypeFilter = wordType,
                 selectedWordLanguageFilter = wordLanguage,
+                selectedMeaningLanguageFilter = meaningLanguage,
                 showWordFilterDialog = false
             )
         }
@@ -122,14 +143,19 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun addNewWord(word: Word) {
+    private fun addNewWord(word: WordWithMeaning) {
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
                     showAddWordDialog = false,
                 )
             }
-            wordRepository.insertWord(word)
+            val wordId = wordRepository.insertWord(word.word)
+            meaningRepository.insertMeaning(
+                word.meaning.copy(
+                    wordId = wordId
+                )
+            )
         }
     }
 

@@ -3,6 +3,7 @@ package com.coderbdk.lokdictionary.di
 import android.content.Context
 import androidx.room.Room
 import com.coderbdk.lokdictionary.data.local.db.LoKDictionaryDatabase
+import com.coderbdk.lokdictionary.data.local.db.dao.MeaningDao
 import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
 import dagger.Module
 import dagger.Provides
@@ -29,5 +30,10 @@ object DatabaseModule {
     @Provides
     fun provideWordDao(database: LoKDictionaryDatabase): WordDao {
         return database.wordDao()
+    }
+
+    @Provides
+    fun provideMeaningDao(database: LoKDictionaryDatabase): MeaningDao {
+        return database.meaningDao()
     }
 }

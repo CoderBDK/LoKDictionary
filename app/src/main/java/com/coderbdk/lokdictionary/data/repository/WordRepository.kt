@@ -2,12 +2,13 @@ package com.coderbdk.lokdictionary.data.repository
 
 import androidx.paging.PagingData
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
+import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
 import kotlinx.coroutines.flow.Flow
 
 interface WordRepository {
-    suspend fun insertWord(word: Word)
+    suspend fun insertWord(word: Word): Long
 
     suspend fun updateWord(word: Word)
 
@@ -18,4 +19,12 @@ interface WordRepository {
         wordType: WordType?,
         wordLanguage: WordLanguage?
     ): Flow<PagingData<Word>>
+
+
+    fun searchWordsWithMeaningsPagingSource(
+        searchQuery: String,
+        wordType: WordType?,
+        wordLanguage: WordLanguage?,
+        meaningLanguage: WordLanguage?
+    ): Flow<PagingData<WordWithMeaning>>
 }

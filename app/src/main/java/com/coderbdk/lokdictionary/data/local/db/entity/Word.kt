@@ -9,7 +9,8 @@ import com.coderbdk.lokdictionary.data.model.WordType
 @Entity(tableName = "words")
 data class Word(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @ColumnInfo("word_id")
+    val wordId: Long = 0,
     @ColumnInfo(name = "word")
     val word: String,
     @ColumnInfo(name = "word_type")

@@ -11,7 +11,8 @@
     <string name="home_screen_filter_apply">Apply</string>
     <string name="home_screen_filter_cancel">Cancel</string>
     <string name="home_screen_filter_words">Filter Words</string>
-    <string name="home_screen_filter_select_word_type">Select word type</string>
-    <string name="home_screen_filter_select_word_language">Select word Language</string>
+    <string name="home_screen_filter_select_word_type">Word type</string>
+    <string name="home_screen_filter_select_word_language">Word Language</string>
+    <string name="home_screen_filter_select_meaning_language">Meaning Language</string>
     <string name="home_screen_filter_clear_filters">Clear Filters</string>
 </resources>

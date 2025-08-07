@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.NoteAdd
@@ -60,7 +62,9 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.coderbdk.lokdictionary.R
+import com.coderbdk.lokdictionary.data.local.db.entity.Meaning
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
+import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
 import com.coderbdk.lokdictionary.ui.components.LoKDropdownMenu
@@ -70,7 +74,7 @@ import kotlinx.coroutines.flow.flowOf
 @Composable
 fun HomeScreen(
     uiState: HomeUiState,
-    pagedWords: LazyPagingItems<Word>,
+    pagedWords: LazyPagingItems<WordWithMeaning>,
     onEvent: (HomeUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -88,11 +92,12 @@ fun HomeScreen(
         WordFilterDialog(
             selectedWordType = uiState.selectedWordTypeFilter,
             selectedWordLanguage = uiState.selectedWordLanguageFilter,
+            selectedMeaningLanguage = uiState.selectedMeaningLanguageFilter,
             onDismiss = {
                 onEvent(HomeUiEvent.ShowWordFilterDialog(false))
             },
-            onApply = { type, lang ->
-                onEvent(HomeUiEvent.WordFilterApply(type, lang))
+            onApply = { type, wordLang, meaningLang ->
+                onEvent(HomeUiEvent.WordFilterApply(type, wordLang, meaningLang))
             },
         )
     }
@@ -172,14 +177,17 @@ fun HomeScreen(
                 unfocusedIndicatorColor = Color.Transparent,
                 focusedIndicatorColor = Color.Transparent
             ),
-            modifier = Modifier.fillMaxWidth().shadow(
-                elevation = 1.dp,
-                shape = CircleShape
-            ).border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-                shape = CircleShape
-            )
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 1.dp,
+                    shape = CircleShape
+                )
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = CircleShape
+                )
         )
 
 
@@ -205,16 +213,16 @@ fun HomeScreen(
                 LazyColumn(modifier = Modifier.fillMaxSize()) {
                     items(
                         count = pagedWords.itemCount,
-                        key = pagedWords.itemKey { it.id }
+                        key = pagedWords.itemKey { it.word.wordId }
                     ) { index ->
                         val word = pagedWords[index]
                         word?.let {
-                            WordItem(uiState, index, word, showMoreMenu = {
+                            WordItem(uiState, index, word.word, word.meaning, showMoreMenu = {
                                 onEvent(
                                     HomeUiEvent.ShowDropdownMoreMenu(
                                         true,
                                         index,
-                                        word
+                                        word.word
                                     )
                                 )
                             }, onDismissRequest = {
@@ -261,12 +269,14 @@ fun HomeScreen(
 @Composable
 fun AddWordDialog(
     onDismiss: () -> Unit,
-    onSave: (Word) -> Unit
+    onSave: (WordWithMeaning) -> Unit
 ) {
     var word by remember { mutableStateOf("") }
+    var meaning by remember { mutableStateOf("") }
     var pronunciation by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf<WordType?>(null) }
     var selectedLanguage by remember { mutableStateOf<WordLanguage?>(null) }
+    var selectedMeaningLanguage by remember { mutableStateOf<WordLanguage?>(null) }
     val wordTypes = remember { WordType.entries.drop(1) }
     val wordLanguages = remember { WordLanguage.entries.drop(1) }
 
@@ -277,12 +287,20 @@ fun AddWordDialog(
                 onClick = {
                     if (word.isNotBlank() && pronunciation.isNotBlank() && selectedType != null && selectedLanguage != null) {
                         onSave(
-                            Word(
-                                word = word.trim(),
-                                wordType = selectedType!!,
-                                wordLanguage = selectedLanguage!!,
-                                wordPronunciation = pronunciation.trim()
+                            WordWithMeaning(
+                                word = Word(
+                                    word = word.trim(),
+                                    wordType = selectedType!!,
+                                    wordLanguage = selectedLanguage!!,
+                                    wordPronunciation = pronunciation.trim()
+                                ),
+                                meaning = Meaning(
+                                    meaning = meaning,
+                                    wordId = 0,
+                                    meaningLanguage = selectedMeaningLanguage!!
+                                )
                             )
+
                         )
                     }
                 }
@@ -298,7 +316,8 @@ fun AddWordDialog(
         title = { Text("Add New Word") },
         text = {
             Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
             ) {
                 OutlinedTextField(
                     value = word,
@@ -306,7 +325,12 @@ fun AddWordDialog(
                     label = { Text("Word") },
                     singleLine = true
                 )
-
+                OutlinedTextField(
+                    value = meaning,
+                    onValueChange = { meaning = it },
+                    label = { Text("Meaning") },
+                    singleLine = true
+                )
                 OutlinedTextField(
                     value = pronunciation,
                     onValueChange = { pronunciation = it },
@@ -340,7 +364,19 @@ fun AddWordDialog(
                         selectedLanguage = it
                     }
                 )
-
+                LoKDropdownMenu(
+                    value = selectedMeaningLanguage?.languageName ?: "",
+                    items = wordLanguages,
+                    label = {
+                        Text(stringResource(R.string.home_screen_filter_select_meaning_language))
+                    },
+                    itemContent = {
+                        Text(it.languageName)
+                    },
+                    onItemSelected = {
+                        selectedMeaningLanguage = it
+                    }
+                )
             }
         }
     )
@@ -350,11 +386,13 @@ fun AddWordDialog(
 fun WordFilterDialog(
     selectedWordType: WordType?,
     selectedWordLanguage: WordLanguage?,
+    selectedMeaningLanguage: WordLanguage?,
     onDismiss: () -> Unit,
-    onApply: (WordType?, WordLanguage?) -> Unit,
+    onApply: (WordType?, WordLanguage?, WordLanguage?) -> Unit,
 ) {
     var selectedType by remember { mutableStateOf(selectedWordType) }
     var selectedLanguage by remember { mutableStateOf(selectedWordLanguage) }
+    var selectedMeaningLanguage by remember { mutableStateOf(selectedMeaningLanguage) }
     val wordTypes = remember { WordType.entries.drop(1) }
     val wordLanguages = remember { WordLanguage.entries.drop(1) }
 
@@ -362,7 +400,7 @@ fun WordFilterDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
             TextButton(onClick = {
-                onApply(selectedType, selectedLanguage)
+                onApply(selectedType, selectedLanguage, selectedMeaningLanguage)
             }) {
                 Text(stringResource(R.string.home_screen_filter_apply))
             }
@@ -404,10 +442,25 @@ fun WordFilterDialog(
                         selectedLanguage = it
                     }
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                LoKDropdownMenu(
+                    value = selectedMeaningLanguage?.languageName ?: "",
+                    items = wordLanguages,
+                    label = {
+                        Text(stringResource(R.string.home_screen_filter_select_meaning_language))
+                    },
+                    itemContent = {
+                        Text(it.languageName)
+                    },
+                    onItemSelected = {
+                        selectedMeaningLanguage = it
+                    }
+                )
                 TextButton(
                     onClick = {
                         selectedType = null
                         selectedLanguage = null
+                        selectedMeaningLanguage = null
                     },
                     modifier = Modifier
                         .align(Alignment.End)
@@ -474,6 +527,7 @@ fun WordItem(
     uiState: HomeUiState,
     index: Int,
     word: Word,
+    meaning: Meaning,
     showMoreMenu: (Word) -> Unit,
     onDismissRequest: () -> Unit
 ) {
@@ -490,13 +544,13 @@ fun WordItem(
             },
             headlineContent = {
                 Text(
-                    text = word.word,
+                    text = "${word.word} (${word.wordLanguage.code})",
                     style = MaterialTheme.typography.titleMedium
                 )
             },
             supportingContent = {
                 Text(
-                    text = "${word.wordType.typeName} (${word.wordLanguage.languageName})",
+                    text = "${meaning.meaning} (${meaning.meaningLanguage.code})",
                     style = MaterialTheme.typography.bodySmall
                 )
             },
@@ -528,36 +582,72 @@ fun WordItem(
 @Composable
 fun HomePreview() {
     val sampleWords = listOf(
-        Word(
-            word = "Apple",
-            wordType = WordType.NOUN,
-            wordLanguage = WordLanguage.ENGLISH,
-            wordPronunciation = "/ˈæp.əl/"
+        WordWithMeaning(
+            word = Word(
+                word = "Apple",
+                wordType = WordType.NOUN,
+                wordLanguage = WordLanguage.ENGLISH,
+                wordPronunciation = "/ˈæp.əl/"
+            ),
+            meaning = Meaning(
+                wordId = 0,
+                meaning = "",
+                meaningLanguage = WordLanguage.BENGALI,
+            )
         ),
-        Word(
-            word = "Run",
-            wordType = WordType.VERB,
-            wordLanguage = WordLanguage.ENGLISH,
-            wordPronunciation = "/rʌn/"
+        WordWithMeaning(
+            word = Word(
+                word = "Run",
+                wordType = WordType.VERB,
+                wordLanguage = WordLanguage.ENGLISH,
+                wordPronunciation = "/rʌn/"
+            ),
+            meaning = Meaning(
+                wordId = 0,
+                meaning = "",
+                meaningLanguage = WordLanguage.BENGALI,
+            )
         ),
-        Word(
-            word = "Beautiful",
-            wordType = WordType.ADJECTIVE,
-            wordLanguage = WordLanguage.ENGLISH,
-            wordPronunciation = "/ˈbjuː.tɪ.fəl/"
+        WordWithMeaning(
+            word = Word(
+                word = "Beautiful",
+                wordType = WordType.ADJECTIVE,
+                wordLanguage = WordLanguage.ENGLISH,
+                wordPronunciation = "/ˈbjuː.tɪ.fəl/"
+            ),
+            meaning = Meaning(
+                wordId = 0,
+                meaning = "",
+                meaningLanguage = WordLanguage.BENGALI,
+            )
         ),
-        Word(
-            word = "Quickly",
-            wordType = WordType.ADVERB,
-            wordLanguage = WordLanguage.ENGLISH,
-            wordPronunciation = "/ˈkwɪk.li/"
+        WordWithMeaning(
+            word = Word(
+                word = "Quickly",
+                wordType = WordType.ADVERB,
+                wordLanguage = WordLanguage.ENGLISH,
+                wordPronunciation = "/ˈkwɪk.li/"
+            ),
+            meaning = Meaning(
+                wordId = 0,
+                meaning = "",
+                meaningLanguage = WordLanguage.BENGALI,
+            )
         ),
-        Word(
-            word = "Joy",
-            wordType = WordType.NOUN,
-            wordLanguage = WordLanguage.ENGLISH,
-            wordPronunciation = "/dʒɔɪ/"
+        WordWithMeaning(
+            word = Word(
+                word = "Joy",
+                wordType = WordType.NOUN,
+                wordLanguage = WordLanguage.ENGLISH,
+                wordPronunciation = "/dʒɔɪ/"
+            ),
+            meaning = Meaning(
+                wordId = 0,
+                meaning = "",
+                meaningLanguage = WordLanguage.BENGALI,
+            )
         )
+
     )
 
     val mockPagedWords = flowOf(PagingData.from(sampleWords)).collectAsLazyPagingItems()
