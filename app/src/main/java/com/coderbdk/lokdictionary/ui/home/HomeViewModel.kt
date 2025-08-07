@@ -9,6 +9,7 @@ import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
 import com.coderbdk.lokdictionary.data.repository.MeaningRepository
+import com.coderbdk.lokdictionary.data.repository.SettingsRepository
 import com.coderbdk.lokdictionary.data.repository.WordRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,9 +17,12 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -64,7 +68,8 @@ sealed class HomeUiEvent {
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val wordRepository: WordRepository,
-    private val meaningRepository: MeaningRepository
+    private val meaningRepository: MeaningRepository,
+    private val settingsRepository: SettingsRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState = _uiState.asStateFlow()
@@ -74,7 +79,7 @@ class HomeViewModel @Inject constructor(
         _uiState.map { it.searchQuery }.debounce(350L).distinctUntilChanged(),
         _uiState.map { it.selectedWordTypeFilter }.distinctUntilChanged(),
         _uiState.map { it.selectedWordLanguageFilter }.distinctUntilChanged(),
-        _uiState.map { it.selectedMeaningLanguageFilter }.distinctUntilChanged()
+        _uiState.map { it.selectedMeaningLanguageFilter }.distinctUntilChanged(),
     ) { query, wordType, wordLanguage, meaningLanguage ->
         wordRepository.searchWordsWithMeaningsPagingSource(
             query,
@@ -84,6 +89,23 @@ class HomeViewModel @Inject constructor(
         )
     }.flatMapLatest { it }
         .cachedIn(viewModelScope)
+
+    init {
+        viewModelScope.launch {
+            combine(
+                settingsRepository.selectedWordLanguage,
+                settingsRepository.selectedMeaningLanguage
+            ) { wordLanguage, meaningLanguage ->
+                _uiState.update {
+                    it.copy(
+                        selectedWordLanguageFilter = wordLanguage,
+                        selectedMeaningLanguageFilter = meaningLanguage
+                    )
+                }
+            }.collect()
+
+        }
+    }
 
     fun onEvent(event: HomeUiEvent) {
         when (event) {

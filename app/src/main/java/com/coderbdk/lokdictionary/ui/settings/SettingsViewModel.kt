@@ -2,6 +2,7 @@ package com.coderbdk.lokdictionary.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.repository.SettingsRepository
 import com.coderbdk.lokdictionary.ui.home.HomeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -13,11 +14,15 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val isDarkModeEnable: Boolean = false
+    val isDarkModeEnable: Boolean = false,
+    val selectedWordLanguage: WordLanguage = WordLanguage.ENGLISH,
+    val selectedMeaningLanguage: WordLanguage = WordLanguage.BENGALI,
 )
 
 sealed class SettingsUiEvent {
     data class EnableDarkMode(val enable: Boolean) : SettingsUiEvent()
+    data class SelectWordLanguage(val language: WordLanguage) : SettingsUiEvent()
+    data class SelectMeaningLanguage(val language: WordLanguage) : SettingsUiEvent()
 }
 
 @HiltViewModel
@@ -32,7 +37,9 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    isDarkModeEnable = settingsRepository.isDarkMoodEnable.first()
+                    isDarkModeEnable = settingsRepository.isDarkMoodEnable.first(),
+                    selectedWordLanguage = settingsRepository.selectedWordLanguage.first(),
+                    selectedMeaningLanguage = settingsRepository.selectedMeaningLanguage.first()
                 )
             }
         }
@@ -42,8 +49,11 @@ class SettingsViewModel @Inject constructor(
     fun onEvent(event: SettingsUiEvent) {
         when (event) {
             is SettingsUiEvent.EnableDarkMode -> enableDarkMode(event.enable)
+            is SettingsUiEvent.SelectWordLanguage -> selectWordLanguage(event.language)
+            is SettingsUiEvent.SelectMeaningLanguage -> selectMeaningLanguage(event.language)
         }
     }
+
 
     private fun enableDarkMode(enable: Boolean) {
         viewModelScope.launch {
@@ -55,4 +65,26 @@ class SettingsViewModel @Inject constructor(
 
     }
 
+    private fun selectWordLanguage(language: WordLanguage) {
+        viewModelScope.launch {
+            if (uiState.value.selectedWordLanguage != language) settingsRepository.updateWordLanguage(
+                language
+            )
+            _uiState.update {
+                it.copy(selectedWordLanguage = language)
+            }
+        }
+
+    }
+
+    private fun selectMeaningLanguage(language: WordLanguage) {
+        viewModelScope.launch {
+            if (uiState.value.selectedMeaningLanguage != language) settingsRepository.updateMeaningLanguage(
+                language
+            )
+            _uiState.update {
+                it.copy(selectedMeaningLanguage = language)
+            }
+        }
+    }
 }
