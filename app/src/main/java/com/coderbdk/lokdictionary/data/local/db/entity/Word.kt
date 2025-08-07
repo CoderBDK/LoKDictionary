@@ -19,4 +19,6 @@ data class Word(
     val wordLanguage: WordLanguage,
     @ColumnInfo(name = "word_pronunciation")
     val wordPronunciation: String,
+    @ColumnInfo(name = "is_bookmark")
+    val isBookmark: Boolean = false
 )
