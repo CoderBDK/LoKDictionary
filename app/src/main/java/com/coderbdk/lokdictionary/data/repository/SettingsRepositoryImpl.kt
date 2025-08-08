@@ -7,7 +7,7 @@ import javax.inject.Inject
 
 class SettingsRepositoryImpl @Inject constructor(private val settingsPrefs: SettingsPreferences) :
     SettingsRepository {
-    override val isDarkMoodEnable: Flow<Boolean> = settingsPrefs.isDarkMoodEnable
+    override val isDarkModeEnable: Flow<Boolean> = settingsPrefs.isDarkModeEnable
     override val selectedWordLanguage: Flow<WordLanguage> = settingsPrefs.selectedWordLanguage
     override val selectedMeaningLanguage: Flow<WordLanguage> = settingsPrefs.selectedMeaningLanguage
 

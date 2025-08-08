@@ -37,7 +37,7 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
-                    isDarkModeEnable = settingsRepository.isDarkMoodEnable.first(),
+                    isDarkModeEnable = settingsRepository.isDarkModeEnable.first(),
                     selectedWordLanguage = settingsRepository.selectedWordLanguage.first(),
                     selectedMeaningLanguage = settingsRepository.selectedMeaningLanguage.first()
                 )

@@ -21,7 +21,7 @@ private object SettingsKeys {
 }
 
 class SettingsPreferences(private val context: Context) {
-    val isDarkMoodEnable = context.dataStore.data.map { preferences ->
+    val isDarkModeEnable = context.dataStore.data.map { preferences ->
         preferences[SettingsKeys.ENABLE_DARK_MODE] ?: false
     }
     val selectedWordLanguage = context.dataStore.data.map { preferences ->

@@ -24,7 +24,7 @@ class MainViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            settingsRepository.isDarkMoodEnable.collectLatest { enable ->
+            settingsRepository.isDarkModeEnable.collectLatest { enable ->
                 _uiState.update {
                     it.copy(
                         isDarkTheme = enable
