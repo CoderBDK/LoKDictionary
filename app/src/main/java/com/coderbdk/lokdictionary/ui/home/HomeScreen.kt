@@ -1,7 +1,6 @@
 package com.coderbdk.lokdictionary.ui.home
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,24 +13,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.automirrored.outlined.NoteAdd
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.SwitchLeft
 import androidx.compose.material.icons.outlined.Book
-import androidx.compose.material.icons.outlined.Bookmark
 import androidx.compose.material.icons.outlined.BookmarkAdd
 import androidx.compose.material.icons.outlined.BookmarkRemove
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.NoteAlt
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -42,11 +44,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,11 +56,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
@@ -71,6 +77,7 @@ import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
 import com.coderbdk.lokdictionary.ui.components.LoKDropdownMenu
+import com.coderbdk.lokdictionary.ui.components.SearchTextField
 import com.coderbdk.lokdictionary.ui.theme.LoKDictionaryTheme
 import kotlinx.coroutines.flow.flowOf
 
@@ -79,10 +86,12 @@ fun HomeScreen(
     uiState: HomeUiState,
     pagedWords: LazyPagingItems<WordWithMeaning>,
     onEvent: (HomeUiEvent) -> Unit,
+    onNavigateToWordDetail: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (uiState.showAddWordDialog) {
         AddWordDialog(
+            uiState = uiState,
             onDismiss = {
                 onEvent(HomeUiEvent.ShowAddWordDialog(false))
             },
@@ -116,6 +125,17 @@ fun HomeScreen(
         )
     }
 
+    if (uiState.showAddOrUpdateWordNoteDialog && uiState.editWord != null) {
+        AddOrUpdateWordNoteDialog(
+            word = uiState.editWord.word,
+            onDismiss = {
+                onEvent(HomeUiEvent.ShowAddOrUpdateWordNoteDialog(false, null))
+            },
+            onSave = { newWord ->
+                onEvent(HomeUiEvent.AddOrUpdateWordNote(newWord))
+            }
+        )
+    }
     Column(
         Modifier
             .fillMaxSize()
@@ -154,7 +174,7 @@ fun HomeScreen(
 
         }
         Spacer(Modifier.height(16.dp))
-        TextField(
+        SearchTextField(
             value = uiState.searchQuery,
             onValueChange = {
                 onEvent(HomeUiEvent.SearchQueryChanged(it))
@@ -171,7 +191,6 @@ fun HomeScreen(
                     Icon(Icons.Default.FilterList, "filter")
                 }
             },
-            singleLine = true,
             trailingIcon = {
                 if (uiState.searchQuery.isNotEmpty()) {
                     IconButton(
@@ -185,26 +204,8 @@ fun HomeScreen(
                     }
 
                 }
-            },
-            shape = CircleShape,
-            colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 1.dp,
-                    shape = CircleShape
-                )
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = CircleShape
-                )
+            }
         )
-
-
         Spacer(Modifier.height(16.dp))
 
         when {
@@ -232,27 +233,10 @@ fun HomeScreen(
                         val word = pagedWords[index]
                         word?.let {
                             WordItem(
-                                uiState, index, word.word, word.meaning, showMoreMenu = {
-                                    onEvent(
-                                        HomeUiEvent.ShowDropdownMoreMenu(
-                                            true,
-                                            index
-                                        )
-                                    )
-                                }, onDismissRequest = {
-                                    onEvent(
-                                        HomeUiEvent.ShowDropdownMoreMenu(
-                                            false,
-                                            0
-                                        )
-                                    )
-                                },
-                                onEdit = {
-                                    onEvent(HomeUiEvent.ShowEditWordDialog(true, word))
-                                },
-                                onToggleBookmark = {
-                                    onEvent(HomeUiEvent.WordBookmark(word.word))
-                                })
+                                uiState = uiState, index = index, word = word,
+                                onEvent = onEvent,
+                                onNavigateToWordDetail = onNavigateToWordDetail
+                            )
                         }
                     }
 
@@ -286,7 +270,51 @@ fun HomeScreen(
 }
 
 @Composable
+fun AddOrUpdateWordNoteDialog(word: Word, onDismiss: () -> Unit, onSave: (Word) -> Unit) {
+    var note by remember { mutableStateOf(word.note ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (note.isNotBlank()) {
+                        onSave(
+                            word.copy(
+                                note = note.trim(),
+                            )
+                        )
+                    }
+                }
+            ) {
+                Text(if (word.note == null) "Save" else "Update")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+        title = { Text(if (word.note == null) "Add Note" else "Update Note") },
+        text = {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.verticalScroll(rememberScrollState())
+            ) {
+                OutlinedTextField(
+                    value = note,
+                    onValueChange = { note = it },
+                    label = { Text("Note") },
+                    maxLines = 9
+                )
+            }
+        }
+    )
+}
+
+@Composable
 fun AddWordDialog(
+    uiState: HomeUiState,
     onDismiss: () -> Unit,
     onSave: (WordWithMeaning) -> Unit
 ) {
@@ -294,8 +322,8 @@ fun AddWordDialog(
     var meaning by remember { mutableStateOf("") }
     var pronunciation by remember { mutableStateOf("") }
     var selectedType by remember { mutableStateOf<WordType?>(null) }
-    var selectedLanguage by remember { mutableStateOf<WordLanguage?>(null) }
-    var selectedMeaningLanguage by remember { mutableStateOf<WordLanguage?>(null) }
+    var selectedLanguage by remember { mutableStateOf(uiState.selectedWordLanguageSettings) }
+    var selectedMeaningLanguage by remember { mutableStateOf(uiState.selectedMeaningLanguageSettings) }
     val wordTypes = remember { WordType.entries.drop(1) }
     val wordLanguages = remember { WordLanguage.entries.drop(1) }
 
@@ -614,6 +642,9 @@ fun DropdownMenuWithMoreOptions(
     onDismissRequest: () -> Unit,
     onEdit: () -> Unit,
     onToggleBookmark: () -> Unit,
+    onDelete: () -> Unit,
+    onWordNoteAddOrUpdate: () -> Unit,
+    onNavigateToWordDetail: (Long) -> Unit
 ) {
 
     DropdownMenu(
@@ -634,18 +665,40 @@ fun DropdownMenuWithMoreOptions(
         HorizontalDivider()
 
         DropdownMenuItem(
-            text = { Text(if(word.isBookmark)"Unbookmark" else "Bookmark") },
-            leadingIcon = { Icon(if(word.isBookmark) Icons.Outlined.BookmarkRemove else Icons.Outlined.BookmarkAdd, contentDescription = null) },
+            text = { Text(if (word.isBookmark) "Unbookmark" else "Bookmark") },
+            leadingIcon = {
+                Icon(
+                    if (word.isBookmark) Icons.Outlined.BookmarkRemove else Icons.Outlined.BookmarkAdd,
+                    contentDescription = null
+                )
+            },
             onClick = {
                 onDismissRequest()
                 onToggleBookmark()
             }
         )
         DropdownMenuItem(
-            text = { Text("Add Note") },
-            leadingIcon = { Icon(Icons.AutoMirrored.Outlined.NoteAdd, contentDescription = null) },
+            text = { Text("Delete") },
+            leadingIcon = { Icon(Icons.Outlined.Delete, contentDescription = null) },
             onClick = {
                 onDismissRequest()
+                onDelete()
+            }
+        )
+
+
+        HorizontalDivider()
+        DropdownMenuItem(
+            text = { Text(if (word.note == null) "Add Note" else "Update Note") },
+            leadingIcon = {
+                Icon(
+                    if (word.note == null) Icons.AutoMirrored.Outlined.NoteAdd else Icons.Outlined.NoteAlt,
+                    contentDescription = null
+                )
+            },
+            onClick = {
+                onDismissRequest()
+                onWordNoteAddOrUpdate()
             }
         )
         HorizontalDivider()
@@ -656,6 +709,7 @@ fun DropdownMenuWithMoreOptions(
             leadingIcon = { Icon(Icons.Outlined.Info, contentDescription = null) },
             onClick = {
                 onDismissRequest()
+                onNavigateToWordDetail(word.wordId)
             }
         )
     }
@@ -665,59 +719,224 @@ fun DropdownMenuWithMoreOptions(
 fun WordItem(
     uiState: HomeUiState,
     index: Int,
-    word: Word,
-    meaning: Meaning,
-    showMoreMenu: (Word) -> Unit,
-    onDismissRequest: () -> Unit,
-    onEdit: () -> Unit,
-    onToggleBookmark: () -> Unit
+    word: WordWithMeaning,
+    onEvent: (HomeUiEvent) -> Unit,
+    onNavigateToWordDetail: (Long) -> Unit
 ) {
-    Card(
+    OutlinedCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        elevation = CardDefaults.cardElevation(2.dp),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(12.dp),
+        onClick = {
+            onNavigateToWordDetail(word.word.wordId)
+        }
     ) {
-        ListItem(
-            overlineContent = {
-                Text(text = word.wordPronunciation.ifEmpty { "No Pronunciation" })
-            },
-            headlineContent = {
-                Text(
-                    text = "${word.word} (${word.wordLanguage.code})",
-                    style = MaterialTheme.typography.titleMedium
-                )
-            },
-            supportingContent = {
-                Text(
-                    text = "${meaning.meaning} (${meaning.meaningLanguage.code})",
-                    style = MaterialTheme.typography.bodySmall
-                )
-            },
-            leadingContent = {
+        Column(
+            Modifier
+                .fillMaxWidth()
+
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 IconButton(onClick = { }) {
                     Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Play")
                 }
-            },
-            trailingContent = {
+                Text(text = word.word.wordPronunciation.ifEmpty { "No Pronunciation" })
                 Box {
-                    IconButton(onClick = { showMoreMenu(word) }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More Options")
+                    IconButton(onClick = {
+                        onEvent(
+                            HomeUiEvent.ShowDropdownMoreMenu(
+                                true,
+                                index
+                            )
+                        )
+                    }) {
+                        Icon(Icons.Default.MoreHoriz, contentDescription = "More Options")
                     }
-
                     if (uiState.showDropdownMoreMenu && uiState.showDropdownMoreMenuAtIndex == index) {
                         DropdownMenuWithMoreOptions(
                             expanded = true,
-                            word = word,
-                            onDismissRequest = onDismissRequest,
-                            onEdit = onEdit,
-                            onToggleBookmark = onToggleBookmark
+                            word = word.word,
+                            onDismissRequest = {
+                                onEvent(
+                                    HomeUiEvent.ShowDropdownMoreMenu(
+                                        false,
+                                        -1
+                                    )
+                                )
+                            },
+                            onEdit = { onEvent(HomeUiEvent.ShowEditWordDialog(true, word)) },
+                            onToggleBookmark = {
+                                onEvent(HomeUiEvent.WordBookmark(word.word))
+                            },
+                            onDelete = {
+                                onEvent(HomeUiEvent.DeleteWord(word.word))
+                            },
+                            onWordNoteAddOrUpdate = {
+                                onEvent(HomeUiEvent.ShowAddOrUpdateWordNoteDialog(true, word))
+                            },
+                            onNavigateToWordDetail = onNavigateToWordDetail
                         )
                     }
                 }
             }
-        )
+            HorizontalDivider()
+            Text(
+                text = buildAnnotatedString {
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.Bold
+                        )
+                    ) {
+                        append("▪ ${word.word.word}")
+                        append("\n")
+                    }
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.Normal,
+                        )
+                    ) {
+                        append("▪ ${word.meaning.meaning}")
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                AssistChip(
+                    enabled = false,
+                    onClick = {},
+                    label = {
+                        Text(word.word.wordType.typeName)
+                    }
+                )
+                Spacer(Modifier.weight(1f))
+                AssistChip(
+                    onClick = {},
+                    label = {
+                        Text(word.word.wordLanguage.languageName)
+                    }
+                )
+                Icon(Icons.Default.SwitchLeft, "arrow", Modifier.padding(horizontal = 8.dp))
+                AssistChip(
+                    onClick = {},
+                    label = {
+                        Text(word.meaning.meaningLanguage.languageName)
+                    }
+                )
+            }
+
+        }
+        if (false)
+            ListItem(
+                overlineContent = {
+                    Text(text = word.word.wordPronunciation.ifEmpty { "No Pronunciation" })
+                },
+                headlineContent = {
+                    Text(
+                        text = "${word.word.word} (${word.word.wordLanguage.code})",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        text = "${word.meaning.meaning} (${word.meaning.meaningLanguage.code})",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                },
+                leadingContent = {
+                    IconButton(onClick = { }) {
+                        Icon(Icons.AutoMirrored.Filled.VolumeUp, contentDescription = "Play")
+                    }
+                },
+                trailingContent = {
+                    Box {
+                        IconButton(onClick = {
+                            onEvent(
+                                HomeUiEvent.ShowDropdownMoreMenu(
+                                    true,
+                                    index
+                                )
+                            )
+                        }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "More Options")
+                        }
+                        if (uiState.showDropdownMoreMenu && uiState.showDropdownMoreMenuAtIndex == index) {
+                            DropdownMenuWithMoreOptions(
+                                expanded = true,
+                                word = word.word,
+                                onDismissRequest = {
+                                    onEvent(
+                                        HomeUiEvent.ShowDropdownMoreMenu(
+                                            false,
+                                            -1
+                                        )
+                                    )
+                                },
+                                onEdit = { onEvent(HomeUiEvent.ShowEditWordDialog(true, word)) },
+                                onToggleBookmark = {
+                                    onEvent(HomeUiEvent.WordBookmark(word.word))
+                                },
+                                onDelete = {
+                                    onEvent(HomeUiEvent.DeleteWord(word.word))
+                                },
+                                onWordNoteAddOrUpdate = {
+                                    onEvent(HomeUiEvent.ShowAddOrUpdateWordNoteDialog(true, word))
+                                },
+                                onNavigateToWordDetail = onNavigateToWordDetail
+                            )
+                        }
+                    }
+                }
+            )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun WordItemPreview() {
+    LoKDictionaryTheme {
+        Surface {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp)
+            ) {
+                WordItem(
+                    uiState = HomeUiState(),
+                    index = 0,
+                    word = WordWithMeaning(
+                        word = Word(
+                            word = "Apple",
+                            wordType = WordType.NOUN,
+                            wordLanguage = WordLanguage.ENGLISH,
+                            wordPronunciation = "/ˈæp.əl/"
+                        ),
+                        meaning = Meaning(
+                            wordId = 0,
+                            meaning = "আপেল",
+                            meaningLanguage = WordLanguage.BENGALI,
+                        )
+                    ),
+                    onEvent = {},
+                    onNavigateToWordDetail = {},
+                )
+            }
+        }
     }
 }
 
@@ -760,7 +979,7 @@ fun HomePreview() {
             ),
             meaning = Meaning(
                 wordId = 0,
-                meaning = "",
+                meaning = "চমৎকার",
                 meaningLanguage = WordLanguage.BENGALI,
             )
         ),
@@ -795,10 +1014,14 @@ fun HomePreview() {
 
     val mockPagedWords = flowOf(PagingData.from(sampleWords)).collectAsLazyPagingItems()
     LoKDictionaryTheme {
-        HomeScreen(
-            uiState = HomeUiState(),
-            pagedWords = mockPagedWords,
-            onEvent = {}
-        )
+        Surface {
+            HomeScreen(
+                uiState = HomeUiState(),
+                pagedWords = mockPagedWords,
+                onEvent = {},
+                onNavigateToWordDetail = {}
+            )
+        }
+
     }
 }

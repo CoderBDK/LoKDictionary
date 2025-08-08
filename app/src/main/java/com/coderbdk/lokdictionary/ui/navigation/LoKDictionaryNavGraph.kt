@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import com.coderbdk.lokdictionary.ui.bookmark.BookmarkRoute
 import com.coderbdk.lokdictionary.ui.home.HomeRoute
 import com.coderbdk.lokdictionary.ui.settings.SettingsRoute
+import com.coderbdk.lokdictionary.ui.wordDetail.WordDetailRoute
 
 @Composable
 fun LoKDictionaryNavGraph(
@@ -27,13 +28,16 @@ fun LoKDictionaryNavGraph(
         exitTransition = { slideOutHorizontally(targetOffsetX = { -it }) + fadeOut() },
     ) {
         composable<Screen.Home> {
-            HomeRoute()
+            HomeRoute(onNavigateToWordDetail = navActions::navigateToWordDetail)
         }
         composable<Screen.Bookmark> {
             BookmarkRoute()
         }
         composable<Screen.Settings> {
             SettingsRoute()
+        }
+        composable<Screen.WordDetail> {
+            WordDetailRoute()
         }
     }
 }

@@ -14,7 +14,8 @@ interface WordRepository {
     suspend fun updateWord(word: Word)
 
     suspend fun deleteWord(word: Word)
-
+    suspend fun upsertWord(word: Word)
+    suspend fun getWordWithMeaningById(wordId: Long): WordWithMeaning?
     fun searchWordsPagingSource(
         searchQuery: String,
         wordType: WordType?,
@@ -35,4 +36,5 @@ interface WordRepository {
         wordLanguage: WordLanguage?,
         meaningLanguage: WordLanguage?
     ): Flow<PagingData<WordWithMeaning>>
+
 }

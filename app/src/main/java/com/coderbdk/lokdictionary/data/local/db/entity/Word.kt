@@ -5,7 +5,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "words")
 data class Word(
     @PrimaryKey(autoGenerate = true)
@@ -20,5 +22,7 @@ data class Word(
     @ColumnInfo(name = "word_pronunciation")
     val wordPronunciation: String,
     @ColumnInfo(name = "is_bookmark")
-    val isBookmark: Boolean = false
+    val isBookmark: Boolean = false,
+    @ColumnInfo(name = "note")
+    val note: String? = null
 )

@@ -7,7 +7,9 @@ import androidx.room.ForeignKey.Companion.CASCADE
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.coderbdk.lokdictionary.data.model.WordLanguage
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     "meanings",
     indices = [

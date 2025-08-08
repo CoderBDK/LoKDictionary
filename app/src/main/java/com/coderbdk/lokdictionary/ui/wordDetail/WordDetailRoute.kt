@@ -1,19 +1,17 @@
-package com.coderbdk.lokdictionary.ui.bookmark
+package com.coderbdk.lokdictionary.ui.wordDetail
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.compose.collectAsLazyPagingItems
 
 @Composable
-fun BookmarkRoute() {
-    val viewModel = hiltViewModel<BookmarkViewModel>()
+fun WordDetailRoute() {
+    val viewModel = hiltViewModel<WordDetailViewModel>()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val pagedWords = viewModel.pagedWords.collectAsLazyPagingItems()
-    BookmarkScreen(
+
+    WordDetailScreen(
         uiState = uiState,
-        pagedWords = pagedWords,
         onEvent = viewModel::onEvent
     )
 }

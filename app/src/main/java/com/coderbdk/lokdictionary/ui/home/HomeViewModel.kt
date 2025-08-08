@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.coderbdk.lokdictionary.data.local.db.entity.Meaning
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
@@ -35,10 +36,13 @@ data class HomeUiState(
     val selectedWordTypeFilter: WordType? = null,
     val selectedWordLanguageFilter: WordLanguage? = null,
     val selectedMeaningLanguageFilter: WordLanguage? = null,
+    val selectedWordLanguageSettings: WordLanguage? = null,
+    val selectedMeaningLanguageSettings: WordLanguage? = null,
     val showAddWordDialog: Boolean = false,
     val showEditWordDialog: Boolean = false,
     val showDropdownMoreMenu: Boolean = false,
     val showWordFilterDialog: Boolean = false,
+    val showAddOrUpdateWordNoteDialog: Boolean = false,
     val showDropdownMoreMenuAtIndex: Int = 0,
     val editWord: WordWithMeaning? = null,
     val errorMessage: String? = null,
@@ -64,6 +68,10 @@ sealed class HomeUiEvent {
 
     data class ShowWordFilterDialog(val mode: Boolean) : HomeUiEvent()
     data class WordBookmark(val word: Word) : HomeUiEvent()
+    data class ShowAddOrUpdateWordNoteDialog(val mode: Boolean, val word: WordWithMeaning?) :
+        HomeUiEvent()
+
+    data class AddOrUpdateWordNote(val word: Word) : HomeUiEvent()
 }
 
 @HiltViewModel
@@ -100,7 +108,9 @@ class HomeViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         selectedWordLanguageFilter = wordLanguage,
-                        selectedMeaningLanguageFilter = meaningLanguage
+                        selectedMeaningLanguageFilter = meaningLanguage,
+                        selectedWordLanguageSettings = wordLanguage,
+                        selectedMeaningLanguageSettings = meaningLanguage
                     )
                 }
             }.collect()
@@ -130,6 +140,38 @@ class HomeViewModel @Inject constructor(
 
             is HomeUiEvent.ShowWordFilterDialog -> showWordFilterDialog(event.mode)
             is HomeUiEvent.WordBookmark -> toggleBookmark(event.word)
+            is HomeUiEvent.ShowAddOrUpdateWordNoteDialog -> showAddOrUpdateWordNoteDialog(
+                event.mode,
+                event.word
+            )
+
+            is HomeUiEvent.AddOrUpdateWordNote -> addOrUpdateWordNote(event.word)
+        }
+    }
+
+    private fun showAddOrUpdateWordNoteDialog(
+        mode: Boolean,
+        word: WordWithMeaning?
+    ) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(
+                    showAddOrUpdateWordNoteDialog = mode,
+                    editWord = word
+                )
+            }
+        }
+    }
+
+    private fun addOrUpdateWordNote(word: Word) {
+        viewModelScope.launch {
+            wordRepository.upsertWord(word)
+            _uiState.update {
+                it.copy(
+                    showAddOrUpdateWordNoteDialog = false,
+                    editWord = null
+                )
+            }
         }
     }
 

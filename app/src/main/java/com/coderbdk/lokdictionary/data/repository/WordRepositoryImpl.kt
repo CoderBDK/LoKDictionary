@@ -25,6 +25,9 @@ class WordRepositoryImpl @Inject constructor(private val wordDao: WordDao) : Wor
         wordDao.deleteWord(word)
     }
 
+    override suspend fun upsertWord(word: Word) {
+        wordDao.upsertWord(word)
+    }
     override fun searchWordsPagingSource(
         searchQuery: String,
         wordType: WordType?,
@@ -87,5 +90,9 @@ class WordRepositoryImpl @Inject constructor(private val wordDao: WordDao) : Wor
                 )
             }
         ).flow
+    }
+
+    override suspend fun getWordWithMeaningById(wordId: Long): WordWithMeaning? {
+        return wordDao.getWordWithMeaningById(wordId)
     }
 }

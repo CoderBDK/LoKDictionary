@@ -36,10 +36,11 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import com.coderbdk.lokdictionary.R
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
+import com.coderbdk.lokdictionary.ui.components.SearchTextField
 import com.coderbdk.lokdictionary.ui.home.WordFilterDialog
 
 @Composable
-fun BookScreen(
+fun BookmarkScreen(
     uiState: BookmarkUiState,
     pagedWords: LazyPagingItems<WordWithMeaning>,
     onEvent: (BookmarkUiEvent) -> Unit,
@@ -64,7 +65,7 @@ fun BookScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        TextField(
+        SearchTextField(
             value = uiState.searchQuery,
             onValueChange = {
                 onEvent(BookmarkUiEvent.SearchQueryChanged(it))
@@ -81,7 +82,6 @@ fun BookScreen(
                     Icon(Icons.Default.FilterList, "filter")
                 }
             },
-            singleLine = true,
             trailingIcon = {
                 if (uiState.searchQuery.isNotEmpty()) {
                     IconButton(
@@ -95,23 +95,7 @@ fun BookScreen(
                     }
 
                 }
-            },
-            shape = CircleShape,
-            colors = TextFieldDefaults.colors(
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .shadow(
-                    elevation = 1.dp,
-                    shape = CircleShape
-                )
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = CircleShape
-                )
+            }
         )
 
 

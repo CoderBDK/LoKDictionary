@@ -8,6 +8,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
@@ -24,6 +25,9 @@ interface WordDao {
 
     @Delete
     suspend fun deleteWord(word: Word)
+
+    @Upsert
+    suspend fun upsertWord(word: Word)
 
     @Query(
         """
@@ -78,5 +82,9 @@ interface WordDao {
         wordLanguage: WordLanguage?,
         meaningLanguage: WordLanguage?
     ): PagingSource<Int, WordWithMeaning>
+
+    @Transaction
+    @Query("SELECT * from words WHERE word_id = :wordId")
+    suspend fun getWordWithMeaningById(wordId: Long): WordWithMeaning?
 
 }

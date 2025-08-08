@@ -8,7 +8,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 
 @Composable
-fun HomeRoute() {
+fun HomeRoute(
+    onNavigateToWordDetail: (Long) -> Unit,
+) {
     if (LocalView.current.isInEditMode) {
         HomePreview()
     } else {
@@ -18,7 +20,8 @@ fun HomeRoute() {
         HomeScreen(
             uiState = uiState,
             pagedWords = pagedWords,
-            onEvent = viewModel::onEvent
+            onEvent = viewModel::onEvent,
+            onNavigateToWordDetail = onNavigateToWordDetail
         )
     }
 

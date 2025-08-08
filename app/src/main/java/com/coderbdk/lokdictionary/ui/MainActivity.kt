@@ -5,22 +5,30 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.NavigateBefore
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -57,6 +65,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoKDictionaryApp() {
     val navController = rememberNavController()
@@ -95,21 +104,49 @@ fun LoKDictionaryApp() {
         Surface {
             Scaffold(
                 topBar = {
-
+                    if (currentDestination?.hasRoute(Screen.WordDetail::class) == true) {
+                        TopAppBar(
+                            title = {
+                                Text("Word Detail")
+                            },
+                            navigationIcon = {
+                                IconButton(
+                                    onClick = {
+                                        navController.navigateUp()
+                                    }
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.NavigateBefore, "navigate_up")
+                                }
+                            }
+                        )
+                    }
                 },
                 bottomBar = {
-                    LoKDictionaryBottomNavigation(
-                        currentDestination,
-                        bottomNavItems,
-                        onNavigate = {
-                            navController.navigate(it.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
+                    AnimatedVisibility(
+                        visible = currentDestination?.hasRoute(Screen.WordDetail::class) != true,
+                        enter = slideInVertically(
+                            initialOffsetY = {
+                                it
                             }
-                        })
+                        ), exit = slideOutVertically(
+                            targetOffsetY = {
+                                it
+                            }
+                        )
+                    ) {
+                        LoKDictionaryBottomNavigation(
+                            currentDestination,
+                            bottomNavItems,
+                            onNavigate = {
+                                navController.navigate(it.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            })
+                    }
                 },
                 modifier = Modifier.fillMaxSize()
             ) { innerPadding ->
