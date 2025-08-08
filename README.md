@@ -1,7 +1,6 @@
-# Multi-Language Dictionary App
+# Multi-Language LoK Dictionary App
 
-**A multi-language dictionary app for Android. Store, search, and manage words with their types and pronunciations. Built with modern Android (Jetpack Compose).**
-
+**A user-friendly multi-language dictionary app for Android. Easily store, search, and manage words along with their types, pronunciations, meanings, and languages. Built with modern Android technologies using Jetpack Compose.**
 ## ✨ Features
 
 * **Multi-language Support:** Store words in various languages like English, Bengali, and more.
@@ -13,6 +12,10 @@
 * **Efficient Search:** Use Jetpack Paging 3 for efficient loading and filtering of large datasets.
 
 * **Modern UI:** A beautiful and responsive user interface built entirely with Jetpack Compose.
+
+* **Customizable Filters:** Easily filter words by type or language to find exactly what you need.
+
+* **Add & Edit Words:** User-friendly dialogs to add new words or edit existing entries.
 
 ## 📸 Preview
 <div align="center">
