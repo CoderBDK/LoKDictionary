@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.coderbdk.lokdictionary.data.local.db.entity.Meaning
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
@@ -19,11 +18,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -71,7 +68,7 @@ sealed class HomeUiEvent {
     data class ShowAddOrUpdateWordNoteDialog(val mode: Boolean, val word: WordWithMeaning?) :
         HomeUiEvent()
 
-    data class AddOrUpdateWordNote(val word: Word) : HomeUiEvent()
+    data class UpdateWordNote(val word: Word) : HomeUiEvent()
 }
 
 @HiltViewModel
@@ -145,7 +142,7 @@ class HomeViewModel @Inject constructor(
                 event.word
             )
 
-            is HomeUiEvent.AddOrUpdateWordNote -> addOrUpdateWordNote(event.word)
+            is HomeUiEvent.UpdateWordNote -> updateWordNote(event.word)
         }
     }
 
@@ -163,9 +160,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun addOrUpdateWordNote(word: Word) {
+    private fun updateWordNote(word: Word) {
         viewModelScope.launch {
-            wordRepository.upsertWord(word)
+            wordRepository.updateWord(word)
             _uiState.update {
                 it.copy(
                     showAddOrUpdateWordNoteDialog = false,

@@ -2,7 +2,6 @@ package com.coderbdk.lokdictionary.ui.wordDetail
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.SwitchLeft
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.HorizontalDivider
@@ -28,22 +26,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.coderbdk.lokdictionary.data.local.db.entity.Meaning
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import com.coderbdk.lokdictionary.data.model.WordLanguage
 import com.coderbdk.lokdictionary.data.model.WordType
-import com.coderbdk.lokdictionary.ui.home.DropdownMenuWithMoreOptions
-import com.coderbdk.lokdictionary.ui.home.HomeUiEvent
 import com.coderbdk.lokdictionary.ui.theme.LoKDictionaryTheme
-import kotlin.math.min
 
 @Composable
 fun WordDetailScreen(
@@ -116,10 +109,12 @@ fun WordDetailContent(word: WordWithMeaning) {
                     .fillMaxWidth()
                     .padding(8.dp),
             ) {
-                Text("\uD83D\uDCDD Note", style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(8.dp))
                 Text(
-                    text = word.word.note?:"---",
+                    "\uD83D\uDCDD Note", style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(8.dp)
+                )
+                Text(
+                    text = word.word.note ?: "---",
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 108.dp)

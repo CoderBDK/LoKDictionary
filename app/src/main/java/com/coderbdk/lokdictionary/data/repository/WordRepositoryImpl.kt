@@ -3,7 +3,6 @@ package com.coderbdk.lokdictionary.data.repository
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
-import androidx.paging.PagingSource
 import com.coderbdk.lokdictionary.data.local.db.dao.WordDao
 import com.coderbdk.lokdictionary.data.local.db.entity.Word
 import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
@@ -28,6 +27,7 @@ class WordRepositoryImpl @Inject constructor(private val wordDao: WordDao) : Wor
     override suspend fun upsertWord(word: Word) {
         wordDao.upsertWord(word)
     }
+
     override fun searchWordsPagingSource(
         searchQuery: String,
         wordType: WordType?,

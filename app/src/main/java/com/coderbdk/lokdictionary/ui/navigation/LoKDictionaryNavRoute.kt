@@ -1,6 +1,5 @@
 package com.coderbdk.lokdictionary.ui.navigation
 
-import com.coderbdk.lokdictionary.data.local.db.entity.WordWithMeaning
 import kotlinx.serialization.Serializable
 
 @Serializable
